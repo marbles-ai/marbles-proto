@@ -1,0 +1,35 @@
+// Marbles Core Service Definitions
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+option java_multiple_files = true;
+option java_package = "ai.marbles.grpc";
+option java_outer_classname = "CoreServiceProto";
+//option cc_enable_arenas = true;
+
+package core_service;
+
+
+message ServiceEndpoint {
+    // Same as protobuf service <name> {}
+    string  name = 1;
+    // opaque current version
+    string  latest_version = 3;
+    // backward compatibility
+    repeated string supported_versions = 4;
+}
+
+
+message ServiceRegistry {
+    repeated ServiceEndpoint endpoints = 1;
+}
+
+
+// The service definition
+service CoreService {
+    // Does nothing
+    rpc ping(google.protobuf.Empty) returns (google.protobuf.Empty) {}
+
+    // Get supported services
+    rpc registry(google.protobuf.Empty) returns (ServiceRegistry) {}
+}

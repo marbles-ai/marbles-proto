@@ -7,7 +7,35 @@ option java_package = "ai.marbles.grpc";
 option java_outer_classname = "CoreServiceProto";
 //option cc_enable_arenas = true;
 
-package core_service;
+package mservice.grpc_core;
+
+
+message ConfigStrings {
+    repeated string items = 1;
+}
+
+message ConfigBytes {
+    repeated bytes items = 1;
+}
+
+message KeyValue {
+    string key = 1;
+    string value = 2;
+}
+
+message ConfigKeyValues {
+    repeated KeyValue items = 1;
+}
+
+message Configuration {
+    string  cmd = 1;
+    oneof data {
+        google.protobuf.Empty null = 2;
+        ConfigStrings sopt = 3;
+        ConfigBytes bopt = 4;
+        ConfigKeyValues kvopt = 5;
+    }
+}
 
 // Proto files on github
 message GithubTag {

@@ -1,0 +1,120 @@
+// -*- coding: utf-8 -*-
+syntax = "proto3";
+
+
+option java_package = "ai.marbles.grpc.ccg";
+option java_multiple_files = true;
+option java_outer_classname = "CcgParserServiceProto";
+package mservice.ccgparser;
+
+message PosTaggedWord {
+    enum PosTag {
+        UNKNOWN = 0;
+        CC = 1;     CD = 2;     DT = 3;     EX = 4;     FW = 5;     IN = 6;
+        JJ = 7;     JJR = 8;    JJS = 9;    LS = 10;    MD = 11;    NN = 12;
+        NNS = 13;   NNP = 14;   NNPS = 15;  PDT = 16;   POS = 17;   PRP = 18;
+        PRP_d = 19; RB = 20;    RBR = 21;   RBS = 22;   RP = 23;    SYM = 24;
+        TO = 25;    UH = 26;    VB = 27;    VBD = 28;   VBG = 29;   VBN = 30;
+        VBP = 31;   VBX = 32;   WDT = 33;   WP = 34;    WP_d = 35;  WPB = 36;
+        PUNCT = 37; LRB = 38;   RRB = 39;   LQU = 40;   RQU = 41;   SO = 42;
+        SYMBOL = 43;
+    }
+    string  word = 1;
+    PosTag  pos = 2;
+}
+
+message TaggedSentence {
+    repeated PosTaggedWord word = 1;
+}
+
+message TokenizedSentence {
+    repeated string word = 1;
+}
+
+message RawSentence {
+    string raw = 1;
+}
+
+message Sentence {
+    oneof choice {
+        TaggedSentence tagged_tokens = 1;
+        TokenizedSentence tokens = 2;
+        // Raw sentence not tokenized
+        string raw = 3;
+    }
+}
+
+message Node {
+    enum RuleType {
+        FA = 0;     // Forward Application              X/Y:f Y:a => X: f(a)
+        BA = 1;     // Backward Application             Y:a X\Y:f => X: f(a)
+        FC = 2;     // Forward Composition              X/Y:f Y/Z:g => X/Z: λx.f(g(x))
+        FX = 3;     // Forward Crossing Composition     X/Y:f Y\Z:g => X\Z: λx.f(g(x))
+        BC = 4;     // Backward Composition             Y\Z:g X\Y:f => X\Z: λx.f(g(x))
+        BX = 5;     // Backward Crossing Composition    Y/Z:g X\Y:f => X/Z: λx.f(g(x))
+        // Forward and backward type-raising            X:a => T/(T\X): λxf.f(a)
+        FORWARD_TYPERAISE = 6;
+        BACKWARD_TYPERAISE = 7;
+        // Generalized Forward Composition          X/Y:f (Y/Z)/$:...λz.gz... => (X\Z)/$: ...λz.f(g(z...))
+        GFC = 8;
+        // Generalized Forward Crossing Composition X/Y:f (Y\Z)$:...λz.gz... => (X\Z)$: ...λz.f(g(z...))
+        GFX = 9;
+        // Generalized Backward Composition         (Y\Z)/$:...λz.gz... X\Y:f => (X\Z)/$: ...λz.f(g(z...))
+        GBC = 10;
+        // Generalized Backrward Crossing Composition   (Y\Z)\$:...λz.gz... X\Y:f => (X\Z)\$: ...λz.f(g(z...))
+        GBX = 11;
+        FS = 12;    // Forward Substitution             (X/Y)/Z:f Y/Z:g => X/Z: λx.fx(g(x))
+        BS = 13;    // Backward Substitution            Y\Z:g (X\Y)\Z:g => X\Z: λx.fx(g(x))
+        FXS = 14;   // Forward Crossing Substitution    (X/Y)\Z:f Y\Z:g => X\Z: λx.fx(g(x))
+        BXS = 15;   // Backward Crossing Substitution   Y/Z:g (X\Y)/Z:f => X/Z: λx.fx(g(x))
+        LP = 16;    // Left punctuation
+        RP = 17;    // Right punctuation
+        CONJ = 18;  // Conjoin
+    }
+
+    string category = 1;            // CCG Category
+    int32 head = 2;                 // Head of node 0|1, always 0 for unary and leaf nodes
+    int32 parent = 3;               // Parent node index
+    oneof choice {
+        RuleType rule = 4;
+        PosTaggedWord token = 5;
+    }
+}
+
+message ParsedSentence {
+    repeated Node nodes = 1;    // Syntax tree ndoes
+    int32 root = 2;             // root index
+    float score = 3;            // parser score
+}
+
+message NBestSentence {
+    Sentence sent = 1;
+    int32 n = 2;
+}
+
+enum ParseStatus {
+    OK = 0;
+    ERROR = 1;
+}
+
+message ParseResult {
+    ParseStatus status = 1;
+    repeated ParsedSentence results = 2;
+}
+
+message SimpleParseResult {
+    ParseStatus status = 1;
+    string result = 2;
+}
+
+service SimpleCcgParser {
+    // Returns a string represenation of the CCG parse as per LDC spec.
+    rpc parse(RawSentence) returns (SimpleParseResult) {}
+    rpc html(RawSentence) returns (SimpleParseResult) {}
+}
+
+service CcgParser {
+    // Returns gRPC representation of the parse
+    rpc parse(Sentence) returns (ParseResult) {}
+    rpc nbest(NBestSentence) returns (ParseResult) {}
+}

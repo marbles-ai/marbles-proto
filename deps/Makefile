@@ -72,10 +72,11 @@ FORCE_BUILD_TEMPLATE = ./build-tool.sh $(1) build
 
 CLEAN_TARGETS=$(addprefix clean-, $(PROJECT_DEPS))
 BUILD_TARGETS=$(addprefix build-, $(PROJECT_DEPS))
+FORCE_BUILD_TARGETS=$(addprefix force-build-, $(PROJECT_DEPS))
 INSTALL_TARGETS=$(addprefix install-, $(PROJECT_DEPS))
-LIST_TARGETS=$(addprefix list-, $(PROJECT_DEPS))
 
-all: build
+all:
+	$(call BUILD_TEMPLATE, protoc)
 
 $(INSTALL_TARGETS):
 	@echo "--$@-begin--"
@@ -95,14 +96,11 @@ $(BUILD_TARGETS):
 	@echo "--$@-end--"
 	@echo
 
-$(LIST_TARGETS):
+$(FORCE_BUILD_TARGETS):
 	@echo "--$@-begin--"
-	@ls -lta $(patsubst list-%,installers/%,$@)
+	$(call FORCE_BUILD_TEMPLATE, $(patsubst build-%,%,$@))
 	@echo "--$@-end--"
 	@echo
-
-build:
-	$(call BUILD_TEMPLATE, protoc)
 
 install:
 	$(call INSTALL_TEMPLATE, protoc)
@@ -111,10 +109,8 @@ install-deps: $(INSTALL_TARGETS)
 
 clean: $(CLEAN_TARGETS)
 
-build-deps: $(BUILD_TARGETS)
+build: $(BUILD_TARGETS)
 
 force-build: $(FORCE_BUILD_TARGETS)
-	
-list: $(LIST_TARGETS)	
 
 

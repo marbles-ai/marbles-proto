@@ -3,24 +3,20 @@ Installing Dependencies
  
 ## Overview
 
-Simply type make in the deps directory and all dependencies should be resolved.
+Proto files depend on the version of the proto compiler. This must be built first by running:
+```
+make
+make install
+```
 
+After which all other dependences can be built by running:
+```
+make build
+make install-deps
+```
 If you intend to modify dependencies please ensure no files owned by root end up
 in the build tree.
- 
-## Adding New OS Package Dependencies
 
-### Linux
-
-Edit `linux_pkg_deps.conf` and add packages to that file. See that file for
-details on usage.
-
-### OSX
-
-Currently we only support the homebrew packaging system. If you want to use
-macports you will need to edit the install-osx-macports.sh and add some shell
-script. Currently this script prints an error message.
- 
 ## Adding New Dependences Built from Source
 
 For dependencies that need to be built locally do the following.
@@ -34,7 +30,7 @@ For dependencies that need to be built locally do the following.
       build tree with this script. Exit 1 on failure.
     - `check.sh`: This is run under your credentials. It should exit 0 if 
       the dependency is installed or exit 1 if not installed.
-    - 'clean.sh`: Clean the build.
+    - `clean.sh`: Clean the build.
 3. Optionally add `common.sh` script for common environment settings across build,
    install, clean, and check.
 

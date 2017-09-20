@@ -7,7 +7,7 @@ option java_package = "ai.marbles.grpc";
 option java_outer_classname = "DiscoveryServiceProto";
 //option cc_enable_arenas = true;
 
-package mservice.grpc_core;
+package mservice;
 
 
 message ConfigStrings {
@@ -28,11 +28,13 @@ message ConfigKeyValues {
 }
 
 message Configuration {
-    string cmd = 1;
-    // Endpoint id
-    string eid = 2;
+    enum Method {
+        KV = 0;
+        BYTES = 1;
+        STRINGS = 2;
+    }
+    Method method = 1;
     oneof data {
-        google.protobuf.Empty null = 3;
         ConfigStrings sopt = 4;
         ConfigBytes bopt = 5;
         ConfigKeyValues kvopt = 6;
@@ -44,47 +46,16 @@ message ConfigResult {
         OK = 0;
         ERROR = 1;
         WARNING = 2;
+        NOTSUPPORTED = 3;
     }
     Status status = 1;
     string reason = 2;
-}
-
-// Service Endpoint
-message Endpoint {
-    // Same as protobuf service <name> {}
-    string name = 1;
-
-    // Unique uuid
-    string id = 2;
-
-    // Current version stored in little endian format as 0xVVRRBBBB where:
-    // V = major version
-    // R = revision (minor version)
-    // B = build number
-    int32 version = 3;
-
-    // Defines which prior versions are supported. Assumes little endian comparison.
-    //
-    // If compatibility 0 or compatibility >= version then
-    // a client is capable of iterfacing with server provided:
-    //      - client_version == version
-    // else a client is capable of iterfacing with server provided:
-    //      - client_version <= version AND client_version >= compatibility.
-    int32 compatibility = 4;
-}
-
-// List of supported endpoints
-message ServiceEndpoints {
-    repeated Endpoint endpoints = 1;
 }
 
 // The service definition
 service Discovery {
     // Does nothing
     rpc ping(google.protobuf.Empty) returns (google.protobuf.Empty) {}
-
-    // Get supported services
-    rpc endpoints(google.protobuf.Empty) returns (ServiceEndpoints) {}
-
+    // Configure endpoint
     rpc configure(Configuration) returns (ConfigResult) {}
 }
